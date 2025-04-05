@@ -194,38 +194,41 @@ const Feed = () => {
     }
   };
 
-  const handleReportPost = async (postId) => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        console.error("Token mancante, impossibile segnalare il post.");
-        return;
+const handleReportPost = async (postId) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    console.error("Token mancante, impossibile segnalare il post.");
+    return;
+  }
+
+  try {
+    // Decodifica il token qui
+    const decodedToken = jwtDecode(token);
+    
+    // Verifica se l'utente ha già segnalato il post
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .eq('post_id', postId)
+      .eq('user_id', decodedToken.id); // Usa decodedToken.id
+
+    if (error) {
+      console.error('Errore nel controllo della segnalazione:', error);
+    } else if (data.length > 0) {
+      alert("Hai già segnalato questo post.");
+      return;
     }
 
-    try {
-        // Verifica se l'utente ha già segnalato il post
-        const { data, error } = await supabase
-          .from('reports')
-          .select('*')
-          .eq('post_id', postId)
-          .eq('user_id', decodedToken.id); // Verifica se l'utente ha già segnalato il post
+    // Se non è stato segnalato, procedi con la segnalazione
+    await supabase
+      .from('reports')
+      .insert([{ post_id: postId, user_id: decodedToken.id }]);
 
-        if (error) {
-          console.error('Errore nel controllo della segnalazione:', error);
-        } else if (data.length > 0) {
-            alert("Hai già segnalato questo post.");
-            return;
-        }
-
-        // Se non è stato segnalato, procedi con la segnalazione
-        await supabase
-          .from('reports')
-          .insert([{ post_id: postId, user_id: decodedToken.id }]);
-
-        alert("Post segnalato con successo!");
-    } catch (error) {
-        console.error('Errore nella segnalazione del post:', error);
-    }
-  };
+    alert("Post segnalato con successo!");
+  } catch (error) {
+    console.error('Errore nella segnalazione del post:', error);
+  }
+};
 
   return (
     <div className={`feed-container ${isCommentsOpen ? 'no-scroll' : ''}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
