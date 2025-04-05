@@ -4,7 +4,7 @@ import Feed from './components/Feed/Feed';  // Componente Feed
 import Carica from './components/Carica/Carica';  // Componente Carica
 import Register from './components/Register/Register';
 import Login from './components/Login/Login';
-import supabase from '../../lib/supabaseClient';
+import supabase from './lib/supabaseClient';
 
 const App = () => {
   const [user, setUser] = useState(null);
