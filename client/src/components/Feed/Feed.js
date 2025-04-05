@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import supabase from '../../lib/supabaseClient';
 import './Feed.css';
 
@@ -27,7 +27,7 @@ const Feed = () => {
         return;
       }
 
-      const decodedToken = jwt_decode(token);
+      const decodedToken = jwtDecode(token);
       if (decodedToken.exp * 1000 < Date.now()) {
         localStorage.removeItem('authToken');
         navigate('/login');
@@ -203,8 +203,7 @@ const handleReportPost = async (postId) => {
 
   try {
     // Decodifica il token qui
-    const decodedToken = jwt_decode(token);
-    
+    const decodedToken = jwtDecode(token); 
     // Verifica se l'utente ha già segnalato il post
     const { data, error } = await supabase
       .from('reports')
