@@ -1,14 +1,13 @@
 import './Register.css';
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Importiamo Link e useNavigate da React Router.
+import { Link, useNavigate } from 'react-router-dom';
 import supabase from '../../lib/supabaseClient';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
-    phone: '',
     password: '',
-    confirmPassword: '', // Aggiungiamo il campo per la conferma della password
+    confirmPassword: '',
   });
 
   const [error, setError] = useState('');
@@ -61,16 +60,6 @@ const Register = () => {
             type="email"
             name="email"
             value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Telefono:</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
             onChange={handleChange}
             required
           />
