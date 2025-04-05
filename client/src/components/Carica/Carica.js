@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Carica.css';
-import { jwtDecode } from 'jwt-decode'; // Cambia questa importazione
+import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
 
 const Carica = () => {
   const [image, setImage] = useState(null);
@@ -24,20 +24,17 @@ const Carica = () => {
     }
 
     // Verifica la validità del token
-    try {
-      const decodedToken = jwtDecode(token); // Usa jwtDecode qui
-      const currentTime = Date.now() / 1000; // Tempo attuale in secondi
+    const checkToken = async () => {
+      const { data, error } = await supabase.auth.getUser();
 
-      if (decodedToken.exp < currentTime) {
-        console.error('Token scaduto. Devi effettuare il login.');
-        localStorage.removeItem('authToken'); // Rimuovi il token scaduto
-        navigate('/login'); // Reindirizza al login
+      if (error || !data.user) {
+        console.error('Token non valido o scaduto. Devi effettuare il login.');
+        localStorage.removeItem('authToken');
+        navigate('/login');
       }
-    } catch (error) {
-      console.error('Errore nel decodificare il token:', error);
-      localStorage.removeItem('authToken'); // Rimuovi il token invalido
-      navigate('/login'); // Reindirizza al login
-    }
+    };
+
+    checkToken();
   }, [navigate]);
 
   // Gestisce il caricamento dell'immagine e la ridimensiona
