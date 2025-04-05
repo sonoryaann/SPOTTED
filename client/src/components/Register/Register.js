@@ -1,13 +1,13 @@
 import './Register.css';
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; 
 import supabase from '../../lib/supabaseClient';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
+    confirmPassword: '', 
   });
 
   const [error, setError] = useState('');
