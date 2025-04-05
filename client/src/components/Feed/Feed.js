@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
 import './Feed.css';
 
 const Feed = () => {
@@ -36,20 +36,19 @@ const Feed = () => {
       }
 
       try {
-        const response = await axios.get('http://192.168.1.16:5000/feed', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Recupera i post tramite Supabase
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .neq('status', 'hidden'); // Filtro per post non nascosti
 
-        // Filtro i post con status "hidden"
-        const filteredPosts = response.data.filter(post => post.status !== 'hidden');
-        setPosts(filteredPosts);
-      } catch (error) {
-        if (error.response?.status === 401) {
-          localStorage.removeItem('authToken');
-          navigate('/login');
-        } else {
+        if (error) {
           console.error('Errore nel caricamento dei post:', error);
+        } else {
+          setPosts(data);
         }
+      } catch (error) {
+        console.error('Errore nel caricamento dei post:', error);
       }
       setLoading(false);
     };
@@ -83,7 +82,7 @@ const Feed = () => {
     const postUrl = `http://192.168.1.16:5000/posts/${postId}`;
     navigator.clipboard.writeText(postUrl);
     alert("Link copiato negli appunti!");
-  };  
+  };
 
   const handleTouchStart = (e) => {
     setStartTouch(e.touches[0].clientY);
@@ -138,26 +137,27 @@ const Feed = () => {
         setIsMenuOpen(false);
         const postId = posts[currentIndex]?.id;
         if (postId) {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    console.error("Token mancante, impossibile ottenere i commenti.");
-                    return;
-                }
-
-                const response = await axios.get(`http://192.168.1.16:5000/comments/${postId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-
-                setComments(response.data);
-            } catch (error) {
-                console.error('Errore nel caricamento dei commenti:', error);
-            }
+            fetchComments(postId); // Carica i commenti tramite Supabase
         }
     }
-};
+  };
+
+  const fetchComments = async (postId) => {
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('post_id', postId); // Ottieni i commenti per un post specifico
+
+      if (error) {
+        console.error('Errore nel recupero dei commenti:', error);
+      } else {
+        setComments(data); // Imposta i commenti
+      }
+    } catch (error) {
+      console.error('Errore nel recupero dei commenti:', error);
+    }
+  };
 
   const handleCommentChange = (e) => {
     setNewComment(e.target.value);
@@ -167,27 +167,33 @@ const Feed = () => {
     e.preventDefault();
     const token = localStorage.getItem('authToken');
     const postId = posts[currentIndex]?.id;
-  
+
     if (!newComment || !postId) {
       console.error("Commento o post_id mancante.");
       return;
     }
-  
+
     console.log("Invio commento:", newComment, "Post ID:", postId);
-  
+
     try {
-      await axios.post(
-        `http://192.168.1.16:5000/comments/${postId}`, // ✅ URL corretto
-        { comment: newComment }, // ✅ Rimosso post_id e created_by
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setNewComment('');
-      toggleComments(); // Ricarica i commenti
+      // Inserimento del commento tramite Supabase
+      const { error } = await supabase
+        .from('comments')
+        .insert([
+          { comment: newComment, post_id: postId } // Inserisci il commento per il post specificato
+        ]);
+
+      if (error) {
+        console.error('Errore nell\'invio del commento:', error);
+      } else {
+        setNewComment('');
+        toggleComments(); // Ricarica i commenti
+      }
     } catch (error) {
       console.error("Errore nell'invio del commento:", error);
     }
   };
-  
+
   const handleReportPost = async (postId) => {
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -197,131 +203,134 @@ const Feed = () => {
 
     try {
         // Verifica se l'utente ha già segnalato il post
-        const response = await axios.get(`http://192.168.1.16:5000/posts/${postId}/isReported`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const { data, error } = await supabase
+          .from('reports')
+          .select('*')
+          .eq('post_id', postId)
+          .eq('user_id', decodedToken.id); // Verifica se l'utente ha già segnalato il post
 
-        // Se il post è già stato segnalato, avvisa l'utente
-        if (response.data.reported) {
+        if (error) {
+          console.error('Errore nel controllo della segnalazione:', error);
+        } else if (data.length > 0) {
             alert("Hai già segnalato questo post.");
             return;
         }
 
         // Se non è stato segnalato, procedi con la segnalazione
-        await axios.post(`http://192.168.1.16:5000/posts/${postId}/report`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await supabase
+          .from('reports')
+          .insert([{ post_id: postId, user_id: decodedToken.id }]);
+
         alert("Post segnalato con successo!");
     } catch (error) {
         console.error('Errore nella segnalazione del post:', error);
     }
-};
-  
-return (
-  <div className={`feed-container ${isCommentsOpen ? 'no-scroll' : ''}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-    <div className="hamburger-menu" onClick={toggleMenu}>
-      &#9776;
-    </div>
+  };
 
-    <div className={`slide-menu ${isMenuOpen ? 'open' : ''}`}>
-      <ul>
-        <li>
-          <button onClick={() => handleMenuClick('home')}>Home</button>
-        </li>
-        <li>
-          <button onClick={() => handleMenuClick('carica')}>Carica Spotted</button>
-        </li>
-        <li>
-          <button onClick={() => handleMenuClick('profilo')}>Profilo</button>
-        </li>
-        <li>
-          <button onClick={() => handleMenuClick('logout')}>Logout</button>
-        </li>
-      </ul>
-    </div>
+  return (
+    <div className={`feed-container ${isCommentsOpen ? 'no-scroll' : ''}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      <div className="hamburger-menu" onClick={toggleMenu}>
+        &#9776;
+      </div>
 
-    <div className="feed-content">
-      {loading ? (
-        <p>Caricamento dei post...</p>
-      ) : posts.length === 0 ? (
-        <p>Nessun post disponibile.</p>
-      ) : (
-        <div className="post-item">
-          {/* Pulsante per segnalare */}
-          <div className="post-options">
-            <button className="options-button" onClick={() => setIsOptionsOpen(!isOptionsOpen)}>
-              ⋮
+      <div className={`slide-menu ${isMenuOpen ? 'open' : ''}`}>
+        <ul>
+          <li>
+            <button onClick={() => handleMenuClick('home')}>Home</button>
+          </li>
+          <li>
+            <button onClick={() => handleMenuClick('carica')}>Carica Spotted</button>
+          </li>
+          <li>
+            <button onClick={() => handleMenuClick('profilo')}>Profilo</button>
+          </li>
+          <li>
+            <button onClick={() => handleMenuClick('logout')}>Logout</button>
+          </li>
+        </ul>
+      </div>
+
+      <div className="feed-content">
+        {loading ? (
+          <p>Caricamento dei post...</p>
+        ) : posts.length === 0 ? (
+          <p>Nessun post disponibile.</p>
+        ) : (
+          <div className="post-item">
+            <div className="post-options">
+              <button className="options-button" onClick={() => setIsOptionsOpen(!isOptionsOpen)}>
+                ⋮
+              </button>
+
+              {isOptionsOpen && (
+                <div className="options-menu">
+                  <button className="options-item" onClick={() => handleShare(posts[currentIndex].id)}>
+                    📤 Condividi
+                  </button>
+                  <button className="options-item report" onClick={() => handleReportPost(posts[currentIndex].id)}>
+                    🚨 Segnala
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button className="comment-button" onClick={toggleComments}>
+              💬
             </button>
 
-            {isOptionsOpen && (
-              <div className="options-menu">
-                <button className="options-item" onClick={() => handleShare(posts[currentIndex].id)}>
-                  📤 Condividi
-                </button>
-                <button className="options-item report" onClick={() => handleReportPost(posts[currentIndex].id)}>
-                  🚨 Segnala
-                </button>
+            <div className="post-image-container">
+              <img
+                src={`http://192.168.1.16:5000${posts[currentIndex].photo_url}`}
+                alt="Post"
+                className="post-image"
+              />
+              <div className="post-description-container">
+                <p className={`post-description ${expanded ? 'expanded' : ''}`}>
+                  {expanded
+                    ? posts[currentIndex].description
+                    : (posts[currentIndex].description || '').slice(0, 15) +
+                      (posts[currentIndex].description?.length > 15 ? '...' : '')}
+                  {posts[currentIndex].description?.length > 15 && (
+                    <span className="expand-text" onClick={toggleDescription}>
+                      {expanded ? ' Nascondi' : ' Mostra di più'}
+                    </span>
+                  )}
+                </p>
               </div>
-            )}
-          </div>
-                    {/* Pulsante per commentare */}
-          <button className="comment-button" onClick={toggleComments}>
-            💬
-          </button>
-
-          <div className="post-image-container">
-            <img
-              src={`http://192.168.1.16:5000${posts[currentIndex].photo_url}`}
-              alt="Post"
-              className="post-image"
-            />
-            <div className="post-description-container">
-              <p className={`post-description ${expanded ? 'expanded' : ''}`}>
-                {expanded
-                  ? posts[currentIndex].description
-                  : (posts[currentIndex].description || '').slice(0, 15) +
-                    (posts[currentIndex].description?.length > 15 ? '...' : '')}
-                {posts[currentIndex].description?.length > 15 && (
-                  <span className="expand-text" onClick={toggleDescription}>
-                    {expanded ? ' Nascondi' : ' Mostra di più'}
-                  </span>
-                )}
-              </p>
             </div>
           </div>
+        )}
+      </div>
+
+      {isCommentsOpen && (
+        <div className={`comments-section ${isCommentsOpen ? 'open' : ''}`}>
+          <h3>Commenti:</h3>
+          <ul>
+            {comments.length === 0 ? (
+              <li>Nessun commento ancora.</li>
+            ) : (
+              comments.map((comment) => (
+                <li key={comment.id}>{comment.comment}</li>
+              ))
+            )}
+          </ul>
+
+          <form className="comment-form" onSubmit={handleCommentSubmit}>
+            <textarea
+              className="comment-input"
+              value={newComment}
+              onChange={handleCommentChange}
+              placeholder="Aggiungi un commento..."
+              rows="2"
+            ></textarea>
+            <button type="submit" className="comment-submit">
+              ➡️
+            </button>
+          </form>
         </div>
       )}
     </div>
-
-    {isCommentsOpen && (
-      <div className={`comments-section ${isCommentsOpen ? 'open' : ''}`}>
-        <h3>Commenti:</h3>
-        <ul>
-          {comments.length === 0 ? (
-            <li>Nessun commento ancora.</li>
-          ) : (
-            comments.map((comment) => (
-              <li key={comment.id}>{comment.comment}</li>
-            ))
-          )}
-        </ul>
-
-        <form className="comment-form" onSubmit={handleCommentSubmit}>
-          <textarea
-            className="comment-input"
-            value={newComment}
-            onChange={handleCommentChange}
-            placeholder="Aggiungi un commento..."
-            rows="2"
-          ></textarea>
-          <button type="submit" className="comment-submit">
-            ➡️
-          </button>
-        </form>
-      </div>
-    )}
-  </div>
-);
+  );
 };
 
 export default Feed;
