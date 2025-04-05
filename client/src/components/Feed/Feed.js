@@ -27,7 +27,7 @@ const Feed = () => {
         return;
       }
 
-      const decodedToken = jwtDecode(token);
+      const decodedToken = jwt_decode(token);
       if (decodedToken.exp * 1000 < Date.now()) {
         localStorage.removeItem('authToken');
         navigate('/login');
@@ -203,7 +203,7 @@ const handleReportPost = async (postId) => {
 
   try {
     // Decodifica il token qui
-    const decodedToken = jwtDecode(token);
+    const decodedToken = jwt_decode(token);
     
     // Verifica se l'utente ha già segnalato il post
     const { data, error } = await supabase
