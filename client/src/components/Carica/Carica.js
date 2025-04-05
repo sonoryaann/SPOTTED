@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Carica.css';
-import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
+import supabase from '../../lib/supabaseClient';
 
 const Carica = () => {
   const [image, setImage] = useState(null);
