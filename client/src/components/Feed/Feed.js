@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import jwt_decode from 'jwt-decode';
 import supabase from '../../lib/supabaseClient';
 import './Feed.css';
 
