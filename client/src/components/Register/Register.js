@@ -1,7 +1,7 @@
 import './Register.css';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Importiamo Link e useNavigate da React Router.
-import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
+import supabase from '../../lib/supabaseClient';
 
 const Register = () => {
   const [formData, setFormData] = useState({
