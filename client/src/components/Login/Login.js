@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css'; // Creeremo questo file successivamente
 import { useNavigate } from 'react-router-dom'; // Per la navigazione
+import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -16,37 +17,31 @@ const Login = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-        const response = await fetch('http://192.168.1.16:5000/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
+      // Autenticazione tramite Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            // Salva il token nel localStorage
-            localStorage.setItem('authToken', data.token);
-            console.log('Login riuscito:', data.message);
-            navigate('/feed'); // Reindirizza alla homepage o un'altra pagina
-        } else {
-            console.error('Errore:', data.message);
-            setError(data.message);
-        }
+      if (error) {
+        console.error('Errore:', error.message);
+        setError(error.message);
+      } else {
+        // Salva il token nel localStorage
+        localStorage.setItem('authToken', data.session.access_token);
+        console.log('Login riuscito');
+        navigate('/feed'); // Reindirizza alla homepage o un'altra pagina
+      }
     } catch (err) {
-        console.error('Errore nella richiesta:', err.message);
-        setError('Si è verificato un errore durante il login.');
+      console.error('Errore nell\'autenticazione:', err.message);
+      setError('Si è verificato un errore durante il login.');
     }
-};
-
+  };
 
   return (
     <div className="login-container">
