@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css'; // Creeremo questo file successivamente
 import { useNavigate } from 'react-router-dom'; // Per la navigazione
-import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
+import supabase from '../../lib/supabaseClient';
 
 const Login = () => {
   const [formData, setFormData] = useState({
