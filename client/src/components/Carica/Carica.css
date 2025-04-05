@@ -1,0 +1,89 @@
+/* Container per la pagina di caricamento */
+.carica-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f8f8f8;
+  padding: 20px;
+}
+
+.carica-container h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.carica-container form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+.carica-container input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
+}
+
+.carica-container textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.carica-container button {
+  width: 100%;
+  padding: 15px;
+  background-color: transparent;
+  color: white;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.carica-container button:disabled {
+  background-color: #fa49c5;
+  cursor: not-allowed;
+}
+
+.carica-container button:hover:not(:disabled) {
+  background-color: #ee9cf3;
+}
+
+@media (max-width: 600px) {
+  .carica-container h2 {
+    font-size: 1.5rem;
+  }
+
+  .carica-container form {
+    padding: 20px;
+  }
+
+  .carica-container input[type="file"],
+  .carica-container textarea,
+  .carica-container button {
+    font-size: 1rem;
+  }
+}

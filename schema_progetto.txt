@@ -1,0 +1,39 @@
+SPOTTED
+├── client
+│   ├── node_modules
+│   ├── public
+│   │   ├── favicon.ico
+│   │   ├── index.html
+│   │   ├── logo192.png
+│   │   ├── logo512.png
+│   │   ├── manifest.json
+│   │   └── robots.txt
+│   ├── src
+│   │   ├── components
+│   │   │   ├── Login
+│   │   │   │   ├── Login.css
+│   │   │   │   └── Login.js
+│   │   │   └── Register
+│   │   │       ├── Register.css
+│   │   │       └── Register.js
+│   │   ├── App.css
+│   │   ├── App.js
+│   │   ├── App.test.js
+│   │   ├── index.css
+│   │   ├── index.js
+│   │   ├── logo.svg
+│   │   ├── reportWebVitals.js
+│   │   └── setupTests.js
+│   ├── .gitignore
+│   ├── package.json
+│   └── package-lock.json
+├── node_modules
+├── public
+│   ├── CSS
+│   │   └── style.css
+│   ├── JS
+│   │   └── scripts.js
+│   └── index.html
+├── index.js
+├── package.json
+└── package-lock.json
