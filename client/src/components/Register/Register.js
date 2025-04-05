@@ -1,6 +1,7 @@
 import './Register.css';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Importiamo Link se usiamo React Router.
+import { Link, useNavigate } from 'react-router-dom'; // Importiamo Link e useNavigate da React Router.
+import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,9 @@ const Register = () => {
     password: '',
     confirmPassword: '', // Aggiungiamo il campo per la conferma della password
   });
+
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,33 +29,31 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('http://192.168.1.44:5000/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          phone_number: formData.phone,
-          password: formData.password,
-        }),
+      // Registrazione tramite Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        alert(data.message);
+      if (error) {
+        console.error('Errore:', error.message);
+        setError(error.message);
       } else {
-        alert(`Errore: ${data.message}`);
+        // Salva il token nel localStorage (opzionale, se lo usi per sessione)
+        localStorage.setItem('authToken', data.session.access_token);
+        alert('Registrazione avvenuta con successo!');
+        navigate('/feed'); // Reindirizza alla pagina feed
       }
-    } catch (error) {
-      console.error('Errore nella richiesta:', error);
-      alert('Errore durante la registrazione.');
+    } catch (err) {
+      console.error('Errore nella registrazione:', err.message);
+      setError('Si è verificato un errore durante la registrazione.');
     }
   };
 
   return (
     <div className="register-container">
       <h2>Registrati</h2>
+      {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Email:</label>
