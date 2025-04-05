@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { supabase } from '../lib/supabaseClient'; // Importa il client Supabase
+import supabase from '../../lib/supabaseClient';
 import './Feed.css';
 
 const Feed = () => {
