@@ -42,14 +42,20 @@ const Register = () => {
         console.error('Errore:', error.message);
         setError(error.message);
       } else {
-        if (data && data.session) {
+        // Se non ci sono errori, tentiamo anche di fare il login
+        const { user, session, error: loginError } = await supabase.auth.signIn({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (loginError) {
+          console.error('Errore durante il login:', loginError.message);
+          setError(loginError.message);
+        } else {
           // Salva il token nel localStorage (opzionale, se lo usi per sessione)
-          localStorage.setItem('authToken', data.session.access_token);
+          localStorage.setItem('authToken', session.access_token);
           alert('Registrazione avvenuta con successo!');
           navigate('/feed'); // Reindirizza alla pagina feed
-        } else {
-          console.error('Errore: sessione non disponibile');
-          setError('Si è verificato un errore durante la registrazione.');
         }
       }
     } catch (err) {
