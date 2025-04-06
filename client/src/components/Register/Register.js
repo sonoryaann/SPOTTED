@@ -34,14 +34,23 @@ const Register = () => {
         password: formData.password,
       });
 
+      // Logga i dati di risposta per aiutare nel debug
+      console.log('Data:', data);
+      console.log('Error:', error);
+
       if (error) {
         console.error('Errore:', error.message);
         setError(error.message);
       } else {
-        // Salva il token nel localStorage (opzionale, se lo usi per sessione)
-        localStorage.setItem('authToken', data.session.access_token);
-        alert('Registrazione avvenuta con successo!');
-        navigate('/feed'); // Reindirizza alla pagina feed
+        if (data && data.session) {
+          // Salva il token nel localStorage (opzionale, se lo usi per sessione)
+          localStorage.setItem('authToken', data.session.access_token);
+          alert('Registrazione avvenuta con successo!');
+          navigate('/feed'); // Reindirizza alla pagina feed
+        } else {
+          console.error('Errore: sessione non disponibile');
+          setError('Si è verificato un errore durante la registrazione.');
+        }
       }
     } catch (err) {
       console.error('Errore nella registrazione:', err.message);
